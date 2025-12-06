@@ -161,6 +161,50 @@ io.on('connection', (socket) => {
             verifierFinReponses(); 
         }
     });
+    // Côté Serveur (dans io.on('connection', (socket) => { ... })
+
+    // Événement 5 : Réception du tri final du Capitaine
+    socket.on('soumettre_tri', (ordreFinalIds) => {
+        const tousLesJoueurs = Object.values(joueurs);
+        let score = 0;
+        let resultatsDetails = [];
+
+        // L'ordreFinalIds est censé être Niveau 1, Niveau 2, ..., Niveau N
+        for (let i = 0; i < ordreFinalIds.length; i++) {
+            const idTrie = ordreFinalIds[i]; // L'ID que le Capitaine pense être le niveau (i+1)
+            const joueur = tousLesJoueurs.find(j => j.id === idTrie);
+            const niveauAssigne = i + 1;
+
+            if (joueur) {
+                const niveauReel = joueur.reponse.niveauAttendu;
+                const difference = Math.abs(niveauAssigne - niveauReel);
+
+                // Si le niveau assigné correspond au niveau réel
+                if (difference === 0) {
+                    score += 2;
+                } else {
+                    // Si le niveau assigné est juste à côté du niveau réel
+                    score += 1 / (difference * difference); // Barème à ajuster (ex: 1 point par bonne place)
+                }
+
+                resultatsDetails.push({
+                    nom: joueur.nom,
+                    texte: joueur.reponse.texte,
+                    niveauReel: niveauReel,
+                    niveauTrie: niveauAssigne,
+                    points: difference === 0 ? 2 : 0 // Simplifié pour l'exemple
+                });
+            }
+        }
+        
+        // Envoi des résultats finaux à tous les joueurs
+        io.emit('fin_de_tour', { 
+            scoreDuCapitaine: score, 
+            details: resultatsDetails 
+        });
+
+        // Réinitialiser le tour (niveauSecret=null, reponse=null, partieEnCours=false)
+    });
 });
 
 // Côté Serveur (Fonction à ajouter au bas du fichier, avant server.listen)
