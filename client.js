@@ -46,6 +46,23 @@ socket.on('liste_joueurs_mise_a_jour', (joueurs) => {
         liste.appendChild(li);
     });
 });
+// Côté Client (dans client.js)
+
+socket.on('debut_phase_tri', (data) => {
+    // Masquer l'écran d'attente
+    document.getElementById('ecran_attente_reponses').style.display = 'none';
+
+    if (socket.id === data.capitaineId) {
+        // Ce client est le Capitaine
+        document.getElementById('ecran_capitaine').style.display = 'block';
+        
+        // Afficher les réponses et créer l'interface de tri (glisser-déposer, boutons, etc.)
+        afficherReponsesATrier(data.reponses);
+    } else {
+        // Ce client est un joueur en attente
+        document.getElementById('ecran_attente_capitaine').style.display = 'block';
+    }
+});
 
 
 // --- B. GESTION DU JEU ---
@@ -60,8 +77,16 @@ function soumettreReponse() {
     }
 }
 
+
 // Fonction pour que le joueur désigné comme Capitaine lance le tour
 function lancerTour() {
     // Le code du client du Capitaine envoie le signal au serveur
     socket.emit('lancer_tour');
 }
+// Côté Client (Fonction à appeler quand le Capitaine valide son tri)
+
+function validerTri(ordreFinalIds) {
+    // ordreFinalIds est un tableau de socket.id dans l'ordre du niveau 1 au niveau N
+    socket.emit('soumettre_tri', ordreFinalIds);
+}
+
