@@ -1,2 +1,68 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="client.js"></script>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de Famille Top Ten</title>
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+
+    <main id="jeu-container">
+        <h1>🎲 Le Mystère des Niveaux</h1>
+
+        <section id="ecran_enregistrement" class="ecran">
+            <h2>1. Votre Nom</h2>
+            <input type="text" id="nom_input" placeholder="Entrez votre nom">
+            <button onclick="soumettreNom()">Rejoindre la Partie</button>
+            <hr>
+            <h3>Joueurs Connectés :</h3>
+            <ul id="liste_joueurs_ui"></ul>
+        </section>
+
+        <section id="ecran_attente" class="ecran" style="display:none;">
+            <h2>En attente du lancement du tour...</h2>
+            <p>Seul le Capitaine peut lancer le jeu.</p>
+            <button onclick="lancerTour()">Êtes-vous le Capitaine ? Lancer le Tour !</button>
+        </section>
+
+        <section id="ecran_reponse" class="ecran" style="display:none;">
+            <p>Votre niveau secret est :</p>
+            <h2 id="niveau_secret_affichage" class="niveau-badge">?</h2>
+            
+            <hr>
+            
+            <p>Thème Actuel :</p>
+            <p class="theme-texte" id="theme_actuel">En attente du thème...</p>
+
+            <label for="reponse_input">Votre Réponse Créative :</label>
+            <textarea id="reponse_input" rows="3" placeholder="Tapez votre réponse ici..."></textarea>
+            <button onclick="soumettreReponse()">Soumettre ma Réponse</button>
+        </section>
+
+        <section id="ecran_attente_reponses" class="ecran" style="display:none;">
+            <h2>💡 Réponse Soumise !</h2>
+            <p>En attente que tous les autres joueurs soumettent la leur...</p>
+        </section>
+
+        <section id="ecran_capitaine" class="ecran" style="display:none;">
+            <h2>👑 CAPITAINE : Trier les Réponses</h2>
+            <p>Triez les réponses ci-dessous de l'intensité **1** (en haut) à **N** (en bas).</p>
+            
+            <div id="liste_reponses_a_trier">
+                </div>
+
+            <button onclick="validerTri()">Valider le Tri !</button>
+        </section>
+        
+        <section id="ecran_resultats" class="ecran" style="display:none;">
+            <h2>🎉 FIN DU TOUR</h2>
+            </section>
+    </main>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script> 
+</body>
+</html>
