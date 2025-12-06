@@ -142,16 +142,55 @@ io.on('connection', (socket) => {
             io.emit('theme_annonce', themeActuel); // Envoie le thème à tout le monde
         }
     });
+    // Côté Serveur (dans io.on('connection', (socket) => { ... })
 
     // Événement 4 : Réception de la réponse d'un joueur
-    socket.on('soumettre_reponse', (reponseJoueur) => {
-        // Ici, vous ajouterez la logique pour stocker la réponse dans joueurs[socket.id].reponse
-        // et vérifier si tous les joueurs ont répondu.
-        console.log(`Réponse de ${joueurs[socket.id].nom} reçue : ${reponseJoueur}`);
-        // ...
+    socket.on('soumettre_reponse', (data) => {
+        // data contient { niveau: monNiveauSecret, texte: reponse }
+        const joueur = joueurs[socket.id];
+        
+        if (joueur && partieEnCours && !joueur.reponse) {
+            joueur.reponse = { 
+                texte: data.texte, 
+                niveauAttendu: data.niveau 
+            };
+            
+            console.log(`Réponse de ${joueur.nom} reçue.`);
+            
+            // Vérifier si toutes les réponses sont là
+            verifierFinReponses(); 
+        }
     });
 });
 
+// Côté Serveur (Fonction à ajouter au bas du fichier, avant server.listen)
+
+function verifierFinReponses() {
+    const tousLesJoueurs = Object.values(joueurs);
+    const joueursAyantRepondu = tousLesJoueurs.filter(j => j.reponse !== null);
+    
+    // Si le nombre de joueurs avec une réponse est égal au nombre total de joueurs
+    if (joueursAyantRepondu.length === tousLesJoueurs.length) {
+        console.log("Toutes les réponses ont été reçues. Début de la phase de tri.");
+        partieEnCours = false; // Fin de la phase de réponse
+
+        // Séparation des réponses pour le tri (sans révéler le niveau secret)
+        const reponsesPourTri = tousLesJoueurs.map(j => ({
+            nom: j.nom,
+            texte: j.reponse.texte,
+            id: j.id // On garde l'ID pour la vérification future
+        }));
+
+        // Choisir un Capitaine aléatoire
+        const capitaineId = tousLesJoueurs[Math.floor(Math.random() * tousLesJoueurs.length)].id;
+        
+        // Envoi des données pour la phase de tri
+        io.emit('debut_phase_tri', {
+            capitaineId: capitaineId,
+            reponses: reponsesPourTri
+        });
+    }
+}
 
 // 4. DÉMARRAGE DU SERVEUR
 server.listen(PORT, () => {
