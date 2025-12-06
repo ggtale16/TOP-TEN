@@ -33,6 +33,54 @@ let themeActuel = null;
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Assurez-vous d'avoir un dossier 'public' contenant votre index.html et vos fichiers JS/CSS client
+// --- FONCTIONS DE LOGIQUE DU JEU ---
+
+// 1. Algorithme de mélange de Fisher-Yates (pour garantir une répartition aléatoire équitable)
+function melanger(tableau) {
+    for (let i = tableau.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [tableau[i], tableau[j]] = [tableau[j], tableau[i]];
+    }
+    return tableau;
+}
+
+// 2. Fonction pour attribuer un rôle aléatoire et secret (de 1 à N)
+function distribuerNiveauxSecrets() {
+    const idsJoueurs = Object.keys(joueurs);
+    const nombreDeJoueurs = idsJoueurs.length;
+
+    // Crée les niveaux de 1 jusqu'au nombre de joueurs
+    const niveauxDisponibles = Array.from({ length: nombreDeJoueurs }, (_, i) => i + 1);
+    
+    // Mélange et distribue les niveaux
+    const niveauxSecrets = melanger(niveauxDisponibles);
+
+    idsJoueurs.forEach((socketId, index) => {
+        const niveauSecret = niveauxSecrets[index];
+        
+        // Stocke le niveau sur le serveur
+        joueurs[socketId].niveauSecret = niveauSecret;
+
+        // ENVOI CIBLÉ : Envoie le niveau secret UNIQUEMENT au joueur concerné
+        io.to(socketId).emit('votre_niveau_secret', niveauSecret);
+    });
+    
+    // Vous devez définir ici le thème, ou le recevoir du Capitaine
+    themeActuel = choisirTheme(); // <--- Vous devrez coder cette fonction
+    io.emit('nouveau_theme_annonce', themeActuel); 
+    
+    console.log(`Niveaux secrets distribués à ${nombreDeJoueurs} joueurs.`);
+}
+
+// Fonction placeholder pour choisir un thème (vous la remplacerez par votre liste de thèmes)
+function choisirTheme() {
+    const themes = [
+        "Décrivez une émotion de 1 (légère) à 10 (intense).",
+        "Décrivez un animal de 1 (minuscule) à 10 (gigantesque).",
+        "Décrivez votre dernier repas de 1 (dégoûtant) à 10 (divin)."
+    ];
+    return themes[Math.floor(Math.random() * themes.length)];
+}
 
 
 // 3. SOCKET.IO : GESTION DES CONNEXIONS ET DE LA LOGIQUE
@@ -64,6 +112,22 @@ io.on('connection', (socket) => {
     });
 
     // --- B. LOGIQUE DU JEU (À COMPLÉTER) ---
+    // Côté Serveur, dans la section io.on('connection', (socket) => { ... }
+    
+    // Événement 3 : Le Capitaine lance un nouveau tour
+    socket.on('lancer_tour', () => {
+        const nombreDeJoueurs = Object.keys(joueurs).length;
+        
+        if (!partieEnCours && nombreDeJoueurs >= 2) { // Assurez-vous d'avoir assez de joueurs
+            partieEnCours = true;
+            distribuerNiveauxSecrets(); // <-- Appel de la fonction
+        } else {
+             // Envoi d'une erreur au client (facultatif)
+             socket.emit('erreur', "Pas assez de joueurs ou partie déjà en cours.");
+        }
+    });
+
+    // ... le reste de votre code socket.on ...
     
     // Événement 3 : Le Capitaine lance un nouveau tour
     socket.on('lancer_tour', () => {
